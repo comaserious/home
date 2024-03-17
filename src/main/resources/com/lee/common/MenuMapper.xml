@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lee.common.MenuMapper">
+    <resultMap id="resultMenuMap" type="com.lee.common.MenuDTO">
+        <id property="code" column="menu_code"/>
+        <result property="name" column="menu_name"/>
+        <result property="price" column="menu_price"/>
+        <result property="categoryCode" column="category_code"/>
+        <result property="orderableStatus" column="orderable_status"/>
+    </resultMap>
+    <select id="selectMenuByPrice" resultMap="resultMenuMap" parameterType="hashmap">
+        select * from tbl_menu
+        where
+        <if test="price lt 10000">
+            <![CDATA[ menu_price < #{price}]]>
+        </if>
+        <if test="price gte 10000 and price lt 20000">
+            menu_price between 10000 and #{price}
+        </if>
+        <if test="price gte 20000 and price lt 30000">
+            menu_price between 20000 and #{price}
+        </if>
+        <if test="price gte 30000">
+            menu_price between and #{price}
+        </if>
+        and orderable_status = 'Y'
+    </select>
+    <select id="selectMenuByNameOrCategory" resultMap="resultMenuMap" parameterType="hashmap">
+        select
+            a.menu_code,
+            a.menu_name,
+            a.menu_price,
+            a.category_code,
+            a.orderable_status
+        from
+            tbl_menu a
+        <if test="category !=null">
+        join
+            tbl_category b on a.category_code = b.category_code
+        </if>
+        where
+        <if test="name != null">
+            menu_name like concat('%',#{name},'%')
+        </if>
+        <if test="category !=null">
+            b.category_name  = #{category}
+        </if>
+        order by
+            a.menu_code
+    </select>
+    <select id="selectMenuBySupCategory" resultMap="resultMenuMap" parameterType="hashmap">
+        select * from tbl_menu
+        where
+        <choose>
+            <when test="supCategory=='식사'">
+                category_code in (4,5,6,7)
+            </when>
+            <when test="supCategory=='음료'">
+                category_code in (8,9,10)
+            </when>
+            <otherwise>
+                category_code in (11,12)
+            </otherwise>
+        </choose>
+        order by
+            menu_code
+    </select>
+    <select id="selectMenuByRandom" parameterType="hashmap" resultMap="resultMenuMap">
+        select * from tbl_menu
+        where
+        menu_code in
+        <foreach collection="randomNumbers" item="random" open="(" separator="," close=")">
+            #{random}
+        </foreach>
+    </select>
+    <select id="selectMenuOneOrAll" resultMap="resultMenuMap" parameterType="hashmap">
+        select
+            *
+        from
+            tbl_menu
+        <if test="menuValue !=null and menuValue gt 0">
+            where
+                menu_code = #{menuValue}
+        </if>
+    </select>
+    <select id="selectOneOrAllByNameOrCategory" resultMap="resultMenuMap" parameterType="hashMap">
+        select * from tbl_menu
+        <trim prefix="where" prefixOverrides="and">
+            <if test="name !=null">
+                menu_name like concat('%',#{name},'%')
+            </if>
+            <if test="category !=null">
+                and category_code = #{category}
+            </if>
+        </trim>
+
+    </select>
+</mapper>
